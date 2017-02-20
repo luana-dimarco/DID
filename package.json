@@ -9,6 +9,7 @@
   },
   "author": "j3tm1r",
   "dependencies": {
-    "socket.io": "latest"
+    "socket.io": "latest",
+    "querystring":"latest"
   }
 }
