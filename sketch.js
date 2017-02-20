@@ -1,7 +1,6 @@
 // for red, green, and blue color values
 var a, r, g, b;
-
-
+var socket;
 var display = {
   width: 32,
   height: 32,
@@ -291,7 +290,19 @@ function setup() {
   computeAnello(primoAnello, 1.1 * windowHeight / 10);
   computeAnello(secondoAnello, 1.7 * windowHeight / 10);
   computeAnello(terzoAnello, 2.5 * windowHeight / 10);
-  frameRate(120);
+
+  socket = io.connect('http://localhost:8080');
+  // We make a named event called 'mouse' and write an
+  // anonymous callback function
+  socket.on('setpixelsColor',
+    // When we receive data
+    function (data) {
+      console.log("Got:a " + data.a + " r " + data.r + " g " + data.g + " b " + data.b);
+      // Draw a blue circle
+      if (!rotatePixels)
+        setpixelsColor(data.a, data.r, data.g, data.b);
+    }
+  );
 }
 
 function draw() {
@@ -342,7 +353,7 @@ function mouseWheel(event) {
         pixels.unshift(single_pixel);
         shift_n--;
       }
-    }else{
+    } else {
       shift_n = -event.delta / 20;
       while (shift_n > 0) {
         single_pixel = pixels.shift();
@@ -393,37 +404,38 @@ function pixelsOff() {
   setpixelsColor(255);
 }
 
-function setpixelsColor(color) {
+function setpixelsColor(a, r, g, b) {
+  var color_v = color(r, g, b, a);
   primoAnello.pixels.forEach(function (pixel, index) {
-    pixel.color = color;
+    pixel.color = color_v;
   });
 
   secondoAnello.pixels.forEach(function (pixel, index) {
-    pixel.color = color;
+    pixel.color = color_v;
   });
 
   terzoAnello.pixels.forEach(function (pixel, index) {
-    pixel.color = color;
+    pixel.color = color_v;
   });
 
   primoTirante.pixels.forEach(function (pixel, index) {
-    pixel.color = color;
+    pixel.color = color_v;
   });
 
   secondoTirante.pixels.forEach(function (pixel, index) {
-    pixel.color = color;
+    pixel.color = color_v;
   });
 
   terzoTirante.pixels.forEach(function (pixel, index) {
-    pixel.color = color;
+    pixel.color = color_v;
   });
 
   quartoTirante.pixels.forEach(function (pixel, index) {
-    pixel.color = color;
+    pixel.color = color_v;
   });
 
   quintoTirante.pixels.forEach(function (pixel, index) {
-    pixel.color = color;
+    pixel.color = color_v;
   });
 }
 

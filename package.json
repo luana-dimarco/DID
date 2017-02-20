@@ -1,6 +1,14 @@
 {
+  "name": "ragnatela_did",
+  "version": "1.0.0",
+  "description": "",
+  "main": "app.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "start": "node app.js"
+  },
+  "author": "j3tm1r",
   "dependencies": {
-    "browser-sync": "^2.13.0",
-    "gulp": "^3.9.1"
+    "socket.io": "latest"
   }
 }
