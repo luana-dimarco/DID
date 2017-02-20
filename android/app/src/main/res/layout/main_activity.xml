@@ -1,0 +1,49 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:gravity="center_horizontal"
+    android:orientation="vertical"
+    android:padding="20dp">
+
+    <Button
+        android:id="@+id/test_post_button"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Test Post"
+        android:textSize="22sp" />
+
+
+    <Button
+        android:id="@+id/change_color_button"
+        android:layout_width="wrap_content"
+        android:layout_height="48dp"
+        android:text="change color"
+        android:textSize="22sp" />
+
+    <LinearLayout
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal">
+
+        <Button
+            android:id="@+id/move_back_button"
+            android:layout_width="48dp"
+            android:layout_height="48dp"
+            android:text="<"
+            android:textSize="22sp" />
+
+        <View
+            android:layout_width="96dp"
+            android:layout_height="match_parent" />
+
+        <Button
+            android:id="@+id/move_forward_button"
+            android:layout_width="48dp"
+            android:layout_height="48dp"
+            android:text=">"
+            android:textSize="22sp" />
+    </LinearLayout>
+
+
+</LinearLayout>
