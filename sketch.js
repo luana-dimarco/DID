@@ -254,6 +254,8 @@ var terzoAnello = {
   pixels: []
 }
 
+var network_interfaces = [];
+
 var pixel_w = 5, pixel_h = 5;
 var display_pixel_s = 2, display_pixel_spacing = 2;
 
@@ -262,6 +264,7 @@ var rotatePixels = false;
 function setup() {
   var myCanvas = createCanvas(windowWidth, windowHeight);
   myCanvas.parent('canvasContainer');
+  colorMode(RGB, 255, 255, 255, 255);
   // Pick colors randomly
   var x = 0, y = 0;
   var display_size = display.width * display_pixel_s + (display.width + 2) * display_pixel_spacing;
@@ -291,18 +294,33 @@ function setup() {
   computeAnello(secondoAnello, 1.7 * windowHeight / 10);
   computeAnello(terzoAnello, 2.5 * windowHeight / 10);
 
+  setupConnection();
+}
+
+function setupConnection() {
+
   socket = io.connect('http://localhost:8080');
-  // We make a named event called 'mouse' and write an
-  // anonymous callback function
+
   socket.on('setpixelsColor',
     // When we receive data
     function (data) {
       console.log("Got:a " + data.a + " r " + data.r + " g " + data.g + " b " + data.b);
-      // Draw a blue circle
       if (!rotatePixels)
         setpixelsColor(data.a, data.r, data.g, data.b);
     }
   );
+
+  socket.on("setPixels", function (data) {
+    setPixels(data);
+  });
+
+  socket.on("setDisplayPixels", function (data) {
+    setDisplayPixels(data);
+  });
+
+  socket.on("ifaces", function (data) {
+    network_interfaces = data;
+  })
 }
 
 function draw() {
@@ -335,69 +353,15 @@ function draw() {
   drawAnello(primoAnello);
   drawAnello(secondoAnello);
   drawAnello(terzoAnello);
-}
-
-function rotatePixels() {
-
-}
-
-function mouseWheel(event) {
-  if (rotatePixels) {
-    var pixels = getPixels();
-    var single_pixel;
-    var shift_n;
-    if (event.delta > 0) {
-      shift_n = event.delta / 10;
-      while (shift_n > 0) {
-        single_pixel = pixels.pop();
-        pixels.unshift(single_pixel);
-        shift_n--;
-      }
-    } else {
-      shift_n = -event.delta / 20;
-      while (shift_n > 0) {
-        single_pixel = pixels.shift();
-        pixels.push(single_pixel);
-        shift_n--;
-      }
-    }
-    setPixels(pixels);
-  }
-}
-
-function mouseClicked() {
-  var new_display_pixels = [], new_pixels = [];
-
-  rotatePixels = !rotatePixels;
-
-  for (var i = 0; i < 1024; i++) {
-    if (rotatePixels) {
-      r = i < 256 ? 0 : 255;
-      g = i < 512 ? 0 : 255;
-      b = i < 768 ? 0 : 255;
-    } else {
-      r = random(255);
-      g = random(255);
-      b = random(255);
-    }
-    new_display_pixels.push(color(r, g, b));
-  }
-
-  for (var i = 0; i < terzoAnello.stop; i++) {
-    if (rotatePixels) {
-      r = i < 256 ? 0 : 255;
-      g = i < 512 ? 0 : 255;
-      b = i < 768 ? 0 : 255;
-    } else {
-      r = random(255);
-      g = random(255);
-      b = random(255);
-    }
-    new_pixels.push(color(r, g, b));
-  }
-  setPixels(new_pixels);
-  setDisplayPixels(new_display_pixels);
-
+  textSize(22);
+  fill(0);
+  stroke(180);
+  translate(-windowWidth / 2, -windowHeight / 2);
+  var text_vertical_pos = 30;
+  network_interfaces.forEach(function (interface, index) {
+    if (interface.name.toLowerCase().indexOf("virtual") == -1)
+      text(interface.name + " " + interface.address + ":" + interface.port, 100, text_vertical_pos += 30);
+  });
 }
 
 function pixelsOff() {
@@ -466,9 +430,14 @@ function getPixels() {
 }
 
 function setPixels(pixels_array) {
+  if (pixels_array.length < terzoAnello.stop) {
+    alert("setPixels ha ricevuto un array troppo corto");
+    return;
+  }
   var changing = primoTirante;
   var pixel_object = {};
-  for (var i = 0; i < pixels_array.length; i++) {
+  var new_pixels = JSON.parse(pixels_array);
+  for (var i = 0; i <= terzoAnello.stop; i++) {
     if (i <= primoTirante.stop) {
       //
     } else if (i <= secondoTirante.stop) {
@@ -487,13 +456,15 @@ function setPixels(pixels_array) {
       changing = terzoAnello;
     }
     pixel_object = changing.pixels[i - changing.start];
-    pixel_object.color = color(pixels_array[i]);
+    if (pixel_object != undefined)
+      pixel_object.color = color(new_pixels[i].r, new_pixels[i].g, new_pixels[i].b, 255);
   }
 }
 
 function setDisplayPixels(pixels_array) {
-  pixels_array.forEach(function (pixel, index) {
-    display.pixels[index].color = pixel;
+  var new_pixels = JSON.parse(pixels_array);
+  new_pixels.forEach(function (pixel, index) {
+    display.pixels[index].color = color(pixel.r, pixel.g, pixel.b, 255);
   });
 }
 
@@ -508,7 +479,7 @@ function computeAnello(anello, radius) {
   var x = 0, y = 0;
   var pixels_n = anello.stop - anello.start + 1;
   var angle_inc = 2 * PI / pixels_n;
-  var angle = 0;
+  var angle = PI;
   for (var i = 0; i < pixels_n; i++) {
     r = random(255);
     g = random(255);
@@ -520,7 +491,7 @@ function computeAnello(anello, radius) {
       x_loc: x,
       y_loc: y
     });
-    angle += angle_inc;
+    angle -= angle_inc;
   }
 }
 

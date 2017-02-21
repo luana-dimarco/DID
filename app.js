@@ -16,7 +16,7 @@ function handleRequest(req, res) {
     // What did we request?
     if (req.method == 'POST') {
         var body = '';
-
+        var url = req.url;
         req.on('data', function (data) {
             body += data;
 
@@ -28,8 +28,16 @@ function handleRequest(req, res) {
 
         req.on('end', function () {
             var post = qs.parse(body);
-            console.log(post);
-            ragnatela_connection.emit("setpixelsColor", { a: 255, r: Math.random() * 255, g: Math.random() * 255, b: Math.random() * 255 });
+
+            if (url == "/test") {
+                ragnatela_connection.emit("setpixelsColor", { a: 255, r: Math.random() * 255, g: Math.random() * 255, b: Math.random() * 255 });
+            } else if (url == "/setPixels") {
+                var pixels = post['pixels'];
+                ragnatela_connection.emit("setPixels", pixels);
+            } else if (url == "/setDisplayPixels") {
+                var pixels = post['pixels'];
+                ragnatela_connection.emit("setDisplayPixels", pixels);
+            }
             res.writeHead(200, { 'Content-Type': contentType });
             res.end("ciao");
         });
@@ -72,6 +80,26 @@ function handleRequest(req, res) {
     }
 }
 
+'use strict';
+
+var os = require('os');
+var ifaces = os.networkInterfaces();
+var net_ifaces = [];
+
+Object.keys(ifaces).forEach(function (ifname) {
+    var alias = 0;
+
+    ifaces[ifname].forEach(function (iface) {
+        if ('IPv4' !== iface.family || iface.internal !== false) {
+            // skip over internal (i.e. 127.0.0.1) and non-ipv4 addresses
+            return;
+        }
+
+
+        net_ifaces.push({name : ifname, address : iface.address, port: 8080});
+    });
+});
+
 
 // WebSocket Portion
 // WebSockets work with the HTTP server
@@ -88,6 +116,8 @@ io.sockets.on('connection',
         socket.on('disconnect', function () {
             console.log("Client has disconnected");
         });
+
+        ragnatela_connection.emit("ifaces", net_ifaces);
 
         // function repeatTimeout() {
         //     socket.emit("setpixelsColor", { a: 255, r: Math.random()*255, g: Math.random()*255, b: Math.random()*255 });

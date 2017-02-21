@@ -6,11 +6,80 @@
     android:orientation="vertical"
     android:padding="20dp">
 
+
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Server IP address and port" />
+
+    <LinearLayout
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal">
+
+        <EditText
+            android:id="@+id/first_byte_ip"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:hint="192"
+            android:inputType="number" />
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="." />
+
+        <EditText
+            android:id="@+id/second_byte_ip"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:hint="168"
+            android:inputType="number" />
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="." />
+
+        <EditText
+            android:id="@+id/third_byte_ip"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:hint="1"
+            android:inputType="number" />
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="." />
+
+        <EditText
+            android:id="@+id/fourth_byte_ip"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:hint="32"
+            android:inputType="number" />
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text=":" />
+
+        <EditText
+            android:id="@+id/host_port"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:hint="8080"
+            android:inputType="number" />
+
+    </LinearLayout>
+
     <Button
         android:id="@+id/test_post_button"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text="Test Post"
+        android:text="Random Display colors"
+        android:layout_marginTop="50dp"
         android:textSize="22sp" />
 
 
@@ -18,19 +87,21 @@
         android:id="@+id/change_color_button"
         android:layout_width="wrap_content"
         android:layout_height="48dp"
-        android:text="change color"
+        android:layout_marginTop="50dp"
+        android:text="Highlight components"
         android:textSize="22sp" />
 
     <LinearLayout
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
+        android:layout_marginTop="50dp"
         android:orientation="horizontal">
 
         <Button
             android:id="@+id/move_back_button"
             android:layout_width="48dp"
             android:layout_height="48dp"
-            android:text="<"
+            android:text="@string/goleft"
             android:textSize="22sp" />
 
         <View
@@ -41,9 +112,17 @@
             android:id="@+id/move_forward_button"
             android:layout_width="48dp"
             android:layout_height="48dp"
-            android:text=">"
+            android:text="@string/goright"
             android:textSize="22sp" />
     </LinearLayout>
 
+
+    <Button
+        android:id="@+id/random_colors"
+        android:layout_width="wrap_content"
+        android:layout_height="48dp"
+        android:layout_marginTop="50dp"
+        android:text="Random colors"
+        android:textSize="22sp" />
 
 </LinearLayout>
