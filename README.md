@@ -32,16 +32,16 @@ Se tutto è andato bene dovremmo vedere un output simile a questo:
 
 A questo punto aprendo nel browser la pagina [http://127.0.0.1:8080](http://127.0.0.1:8080) dovremmo vedere questo:
 
-![simulatore](capture_1.png "Il simulatore all'avvio")
+![simulatore](capture_1.PNG "Il simulatore all'avvio")
 
 Avviamo Android Studio e selezioniamo la voce "Open an existing Android Studio project", scegliendo la cartella android che si trova dentro la cartella **ragnatela_did** :
 
 
-![Cartella did](cartella_did.png "Contenuti della cartella del progetto")
+![Cartella did](cartella_did.PNG "Contenuti della cartella del progetto")
 
 Una volta caricato il progetto da Android Studio lo lanciamo e sullo smartphone si dovrebbe vedere questa interfaccia. 
 
-![App Android](capture_android.png "Contenuti della cartella del progetto")
+![App Android](capture_android.PNG "Contenuti della cartella del progetto")
 
 In alto bisogna specificare l'indirizzo IP e la porta del computer che sta eseguendo il server NodeJS. 
 Quest'informazione si può trovare anche nell'interfaccia del simulatore in alto a sinistra. 
@@ -59,10 +59,10 @@ Gli esempi di comunicazione col simulatore si trovano nella classe MainActivity.
 
 La seguente immagine mostra il simulatore dopo il comando **HIGHLIGHT_COMPONENTS**
 
-![Ragnatela](capture_high.png "Le parti della ragnatela sono evidenziate con colori diversi")
+![Ragnatela](capture_high.PNG "Le parti della ragnatela sono evidenziate con colori diversi")
 
 In quest'ultima immagine invece viene mostrato il simulatore dopo la pressione del tasto **\>**
-![Ragnatela](capture_movement.png "Le parti della ragnatela sono evidenziate con colori diversi")
+![Ragnatela](capture_movement.PNG "Le parti della ragnatela sono evidenziate con colori diversi")
 
 Come si può notare i pixel del primo anello si stanno "spostando" nel secondo e così via..
 In bocca al lupo!
