@@ -41,7 +41,7 @@ Avviamo Android Studio e selezioniamo la voce "Open an existing Android Studio p
 
 Una volta caricato il progetto da Android Studio lo lanciamo e sullo smartphone si dovrebbe vedere questa interfaccia. 
 
-![App Android](capture_android.PNG "Contenuti della cartella del progetto")
+![App Android](capture_android.png "Contenuti della cartella del progetto")
 
 In alto bisogna specificare l'indirizzo IP e la porta del computer che sta eseguendo il server NodeJS. 
 Quest'informazione si può trovare anche nell'interfaccia del simulatore in alto a sinistra. 
