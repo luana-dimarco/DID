@@ -2,27 +2,24 @@ package it.polito.did.ragnatela;
 
 import android.app.Activity;
 import android.os.Bundle;
+import android.os.Handler;
+import android.os.HandlerThread;
 import android.text.Editable;
 import android.text.TextWatcher;
 import android.util.Log;
-import android.view.KeyEvent;
 import android.widget.Button;
 import android.widget.EditText;
-import android.widget.TextView;
 
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
-import java.io.IOException;
-import java.util.ArrayList;
 import java.util.List;
 
 import butterknife.BindView;
 import butterknife.BindViews;
 import butterknife.ButterKnife;
 import butterknife.OnClick;
-import butterknife.OnTextChanged;
 import butterknife.Unbinder;
 import okhttp3.FormBody;
 import okhttp3.HttpUrl;
@@ -53,6 +50,10 @@ public class MainActivity extends Activity {
     EditText hostPort;
     private TextWatcher myIpTextWatcher;
     private JSONArray pixels_array;
+
+    private Handler mHandler = null;
+
+    private HandlerThread mHandlerThread = null;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -85,6 +86,14 @@ public class MainActivity extends Activity {
         }
 
         hostPort.addTextChangedListener(myIpTextWatcher);
+
+        startHandlerThread();
+    }
+
+    public void startHandlerThread() {
+        mHandlerThread = new HandlerThread("HandlerThread");
+        mHandlerThread.start();
+        mHandler = new Handler(mHandlerThread.getLooper());
     }
 
     private boolean checkCorrectIp() {
@@ -149,8 +158,8 @@ public class MainActivity extends Activity {
 
 
     @OnClick(R.id.random_colors)
-    void setRandomColors(){
-        Thread t = new Thread() {
+    void setRandomColors() {
+        mHandler.post(new Runnable() {
             @Override
             public void run() {
                 JSONObject tmp;
@@ -181,18 +190,14 @@ public class MainActivity extends Activity {
                     e.printStackTrace();
                 }
             }
-        };
-
-        t.start();
+        });
     }
 
     @OnClick(R.id.test_post_button)
     void testPostButton() {
-        Thread t = new Thread() {
+        mHandler.post(new Runnable() {
             @Override
             public void run() {
-                JSONObject tmp;
-
                 try {
                     preparePixelsArray();
 
@@ -219,14 +224,12 @@ public class MainActivity extends Activity {
                     e.printStackTrace();
                 }
             }
-        };
-
-        t.start();
+        });
     }
 
     @OnClick(R.id.change_color_button)
     void changeColor() {
-        Thread t = new Thread() {
+        mHandler.post(new Runnable() {
             @Override
             public void run() {
 
@@ -251,15 +254,13 @@ public class MainActivity extends Activity {
                     e.printStackTrace();
                 }
             }
-        };
-
-        t.start();
+        });
     }
 
 
     @OnClick(R.id.move_forward_button)
     void movePixelsForward() {
-        Thread t = new Thread() {
+        mHandler.post(new Runnable() {
             @Override
             public void run() {
 
@@ -283,21 +284,19 @@ public class MainActivity extends Activity {
                             .addHeader("content-type", "application/json; charset=utf-8")
                             .post(body)
                             .build();
-                        Response response = okHttpClient.newCall(request).execute();
-                        Log.d("TEST_POST", response.body().string());
+                    Response response = okHttpClient.newCall(request).execute();
+                    Log.d("TEST_POST", response.body().string());
 
                 } catch (Exception e) {
                     e.printStackTrace();
                 }
             }
-        };
-
-        t.start();
+        });
     }
 
     @OnClick(R.id.move_back_button)
     void movePixelsBackward() {
-        Thread t = new Thread() {
+        mHandler.post(new Runnable() {
             @Override
             public void run() {
 
@@ -327,9 +326,7 @@ public class MainActivity extends Activity {
                     e.printStackTrace();
                 }
             }
-        };
-
-        t.start();
+        });
     }
 
     void preparePixelsArray() throws JSONException {
