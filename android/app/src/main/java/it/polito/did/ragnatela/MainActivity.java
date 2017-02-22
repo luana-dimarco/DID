@@ -3,12 +3,12 @@ package it.polito.did.ragnatela;
 import android.app.Activity;
 import android.os.Bundle;
 import android.os.Handler;
-import android.os.HandlerThread;
+import android.os.Message;
 import android.text.Editable;
 import android.text.TextWatcher;
-import android.util.Log;
 import android.widget.Button;
 import android.widget.EditText;
+import android.widget.Toast;
 
 import org.json.JSONArray;
 import org.json.JSONException;
@@ -21,39 +21,41 @@ import butterknife.BindViews;
 import butterknife.ButterKnife;
 import butterknife.OnClick;
 import butterknife.Unbinder;
-import okhttp3.FormBody;
-import okhttp3.HttpUrl;
-import okhttp3.MediaType;
-import okhttp3.OkHttpClient;
-import okhttp3.Request;
-import okhttp3.RequestBody;
-import okhttp3.Response;
 
 public class MainActivity extends Activity {
 
     Unbinder unbinder;
-    OkHttpClient okHttpClient = new OkHttpClient();
 
     private String host_url = "192.168.1.32";
     private int host_port = 8080;
 
-    @BindView(R.id.test_post_button)
-    Button test_post_button;
+    @BindView(R.id.set_display_pixels)
+    Button set_display_pixels;
 
     @BindView(R.id.random_colors)
     Button randomColors;
+
+    @BindView(R.id.move_backward_button)
+    Button moveBackwardButton;
+
+    @BindView(R.id.move_forward_button)
+    Button moveForwardButton;
+
+    @BindView(R.id.highlight_components_button)
+    Button changeColorButton;
 
     @BindViews({R.id.first_byte_ip, R.id.second_byte_ip, R.id.third_byte_ip, R.id.fourth_byte_ip})
     List<EditText> ip_address_bytes;
 
     @BindView(R.id.host_port)
     EditText hostPort;
+
     private TextWatcher myIpTextWatcher;
     private JSONArray pixels_array;
 
-    private Handler mHandler = null;
+    private Handler mNetworkHandler, mMainHandler;
 
-    private HandlerThread mHandlerThread = null;
+    private NetworkThread mNetworkThread = null;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -61,7 +63,11 @@ public class MainActivity extends Activity {
         setContentView(R.layout.main_activity);
         unbinder = ButterKnife.bind(this);
 
-        test_post_button.setEnabled(false);
+        set_display_pixels.setEnabled(false);
+        randomColors.setEnabled(false);
+        moveBackwardButton.setEnabled(false);
+        moveForwardButton.setEnabled(false);
+        changeColorButton.setEnabled(false);
 
         myIpTextWatcher = new TextWatcher() {
             @Override
@@ -72,8 +78,20 @@ public class MainActivity extends Activity {
             @Override
             public void onTextChanged(CharSequence s, int start, int before, int count) {
 
-                if (checkCorrectIp())
-                    test_post_button.setEnabled(true);
+                if (checkCorrectIp()) {
+                    moveBackwardButton.setEnabled(true);
+                    moveForwardButton.setEnabled(true);
+                    randomColors.setEnabled(true);
+                    set_display_pixels.setEnabled(true);
+                    changeColorButton.setEnabled(true);
+                    Message msg = mNetworkHandler.obtainMessage();
+                    msg.what = NetworkThread.SET_SERVER_DATA;
+                    msg.obj = host_url;
+                    msg.arg1 = host_port;
+                    msg.sendToTarget();
+
+                    handleNetworkRequest(NetworkThread.SET_SERVER_DATA, host_url, host_port ,0);
+                }
             }
 
             @Override
@@ -87,13 +105,22 @@ public class MainActivity extends Activity {
 
         hostPort.addTextChangedListener(myIpTextWatcher);
 
+        pixels_array = preparePixelsArray();
+
+        mMainHandler = new Handler() {
+            @Override
+            public void handleMessage(Message msg) {
+                Toast.makeText(MainActivity.this, (String) msg.obj, Toast.LENGTH_LONG).show();
+            }
+        };
+
         startHandlerThread();
     }
 
     public void startHandlerThread() {
-        mHandlerThread = new HandlerThread("HandlerThread");
-        mHandlerThread.start();
-        mHandler = new Handler(mHandlerThread.getLooper());
+        mNetworkThread = new NetworkThread(mMainHandler);
+        mNetworkThread.start();
+        mNetworkHandler = mNetworkThread.getNetworkHandler();
     }
 
     private boolean checkCorrectIp() {
@@ -111,7 +138,7 @@ public class MainActivity extends Activity {
         sb.deleteCharAt(sb.length() - 1);
 
         port = Integer.parseInt(hostPort.getText().toString());
-        if (validIP(sb.toString()) && port > 0 & port < 65535) {
+        if (validIP(sb.toString()) && port >= 0 & port <= 65535) {
             host_url = sb.toString();
             host_port = port;
             return true;
@@ -151,210 +178,133 @@ public class MainActivity extends Activity {
     protected void onDestroy() {
         super.onDestroy();
         unbinder.unbind();
+        if (mNetworkThread != null && mNetworkHandler != null) {
+            mNetworkHandler.removeMessages(mNetworkThread.SET_PIXELS);
+            mNetworkHandler.removeMessages(mNetworkThread.SET_DISPLAY_PIXELS);
+            mNetworkHandler.removeMessages(mNetworkThread.SET_SERVER_DATA);
+            mNetworkThread.quit();
+            try {
+                mNetworkThread.join(100);
+            } catch (InterruptedException ie) {
+                throw new RuntimeException(ie);
+            } finally {
+                mNetworkThread = null;
+                mNetworkHandler = null;
+            }
+        }
     }
-
-    public static final MediaType JSON
-            = MediaType.parse("application/json; charset=utf-8");
-
 
     @OnClick(R.id.random_colors)
     void setRandomColors() {
-        mHandler.post(new Runnable() {
-            @Override
-            public void run() {
-                JSONObject tmp;
 
-                try {
-                    preparePixelsArray();
+        try {
+            JSONArray pixels_array = preparePixelsArray();
 
-                    for (int i = 0; i < pixels_array.length(); i++) {
-                        ((JSONObject) pixels_array.get(i)).put("r", (int) (Math.random() * 255.0f));
-                        ((JSONObject) pixels_array.get(i)).put("g", (int) (Math.random() * 255.0f));
-                        ((JSONObject) pixels_array.get(i)).put("b", (int) (Math.random() * 255.0f));
-                    }
-                    RequestBody body = new FormBody.Builder()
-                            .add("pixels", pixels_array.toString())
-                            .build();
-                    Request request = new Request.Builder()
-                            .url(new HttpUrl.Builder()
-                                    .scheme("http")
-                                    .host(host_url)
-                                    .port(host_port).build().toString() + "setPixels")
-                            .addHeader("content-type", "application/json; charset=utf-8")
-                            .post(body)
-                            .build();
-
-                    Response response = okHttpClient.newCall(request).execute();
-                    Log.d("TEST_POST", response.body().string());
-                } catch (Exception e) {
-                    e.printStackTrace();
-                }
+            for (int i = 0; i < pixels_array.length(); i++) {
+                ((JSONObject) pixels_array.get(i)).put("r", (int) (Math.random() * 255.0f));
+                ((JSONObject) pixels_array.get(i)).put("g", (int) (Math.random() * 255.0f));
+                ((JSONObject) pixels_array.get(i)).put("b", (int) (Math.random() * 255.0f));
             }
-        });
+            handleNetworkRequest(NetworkThread.SET_PIXELS, pixels_array, 0 ,0);
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+
     }
 
-    @OnClick(R.id.test_post_button)
-    void testPostButton() {
-        mHandler.post(new Runnable() {
-            @Override
-            public void run() {
-                try {
-                    preparePixelsArray();
+    @OnClick(R.id.set_display_pixels)
+    void setDisplayPixels() {
+        try {
+            JSONArray pixels_array = preparePixelsArray();
 
-                    for (int i = 0; i < pixels_array.length(); i++) {
-                        ((JSONObject) pixels_array.get(i)).put("r", (int) (Math.random() * 255.0f));
-                        ((JSONObject) pixels_array.get(i)).put("g", (int) (Math.random() * 255.0f));
-                        ((JSONObject) pixels_array.get(i)).put("b", (int) (Math.random() * 255.0f));
-                    }
-                    RequestBody body = new FormBody.Builder()
-                            .add("pixels", pixels_array.toString())
-                            .build();
-                    Request request = new Request.Builder()
-                            .url(new HttpUrl.Builder()
-                                    .scheme("http")
-                                    .host(host_url)
-                                    .port(host_port).build().toString() + "setDisplayPixels")
-                            .addHeader("content-type", "application/json; charset=utf-8")
-                            .post(body)
-                            .build();
-
-                    Response response = okHttpClient.newCall(request).execute();
-                    Log.d("TEST_POST", response.body().string());
-                } catch (Exception e) {
-                    e.printStackTrace();
-                }
+            for (int i = 0; i < pixels_array.length(); i++) {
+                ((JSONObject) pixels_array.get(i)).put("r", (int) (Math.random() * 255.0f));
+                ((JSONObject) pixels_array.get(i)).put("g", (int) (Math.random() * 255.0f));
+                ((JSONObject) pixels_array.get(i)).put("b", (int) (Math.random() * 255.0f));
             }
-        });
+            handleNetworkRequest(NetworkThread.SET_DISPLAY_PIXELS, pixels_array, 0 ,0);
+        } catch (JSONException e) {
+            // There should be no Exception
+        }
     }
 
-    @OnClick(R.id.change_color_button)
-    void changeColor() {
-        mHandler.post(new Runnable() {
-            @Override
-            public void run() {
-
-                try {
-                    preparePixelsArray();
-
-                    RequestBody body = new FormBody.Builder()
-                            .add("pixels", pixels_array.toString())
-                            .build();
-                    Request request = new Request.Builder()
-                            .url(new HttpUrl.Builder()
-                                    .scheme("http")
-                                    .host(host_url)
-                                    .port(host_port).build().toString() + "setPixels")
-                            .addHeader("content-type", "application/json; charset=utf-8")
-                            .post(body)
-                            .build();
-
-                    Response response = okHttpClient.newCall(request).execute();
-                    Log.d("TEST_POST", response.body().string());
-                } catch (Exception e) {
-                    e.printStackTrace();
-                }
-            }
-        });
+    @OnClick(R.id.highlight_components_button)
+    void highLightComponents() {
+        try {
+            pixels_array = preparePixelsArray();
+            handleNetworkRequest(NetworkThread.SET_PIXELS, pixels_array, 0 ,0);
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
     }
-
 
     @OnClick(R.id.move_forward_button)
     void movePixelsForward() {
-        mHandler.post(new Runnable() {
-            @Override
-            public void run() {
-
-                try {
-
-                    JSONArray jsonArray = new JSONArray();
-
-
-                    for (int i = 0; i < pixels_array.length(); i++) {
-                        jsonArray.put(pixels_array.get((i + pixels_array.length() - 10) % pixels_array.length()));
-                    }
-                    pixels_array = jsonArray;
-                    RequestBody body = new FormBody.Builder()
-                            .add("pixels", pixels_array.toString())
-                            .build();
-                    Request request = new Request.Builder()
-                            .url(new HttpUrl.Builder()
-                                    .scheme("http")
-                                    .host(host_url)
-                                    .port(host_port).build().toString() + "setPixels")
-                            .addHeader("content-type", "application/json; charset=utf-8")
-                            .post(body)
-                            .build();
-                    Response response = okHttpClient.newCall(request).execute();
-                    Log.d("TEST_POST", response.body().string());
-
-                } catch (Exception e) {
-                    e.printStackTrace();
-                }
+        try {
+            JSONArray jsonArray = new JSONArray();
+            for (int i = 0; i < pixels_array.length(); i++) {
+                jsonArray.put(pixels_array.get((i + pixels_array.length() - 10) % pixels_array.length()));
             }
-        });
-    }
-
-    @OnClick(R.id.move_back_button)
-    void movePixelsBackward() {
-        mHandler.post(new Runnable() {
-            @Override
-            public void run() {
-
-                try {
-
-                    JSONArray jsonArray = new JSONArray();
-
-
-                    for (int i = 0; i < pixels_array.length(); i++) {
-                        jsonArray.put(pixels_array.get((i + 10) % pixels_array.length()));
-                    }
-                    pixels_array = jsonArray;
-                    RequestBody body = new FormBody.Builder()
-                            .add("pixels", pixels_array.toString())
-                            .build();
-                    Request request = new Request.Builder()
-                            .url(new HttpUrl.Builder()
-                                    .scheme("http")
-                                    .host(host_url)
-                                    .port(host_port).build().toString() + "setPixels")
-                            .addHeader("content-type", "application/json; charset=utf-8")
-                            .post(body)
-                            .build();
-                    Response response = okHttpClient.newCall(request).execute();
-                    Log.d("TEST_POST", response.body().string());
-                } catch (Exception e) {
-                    e.printStackTrace();
-                }
-            }
-        });
-    }
-
-    void preparePixelsArray() throws JSONException {
-        pixels_array = new JSONArray();
-        JSONObject tmp;
-
-        for (int i = 0; i < 1072; i++) {
-            tmp = new JSONObject();
-            tmp.put("a", 0);
-            if (i < 522) {
-                tmp.put("g", 255);
-                tmp.put("b", 0);
-                tmp.put("r", 0);
-            } else if (i < 613) {
-                tmp.put("r", 255);
-                tmp.put("g", 0);
-                tmp.put("b", 0);
-            } else if (i < 791) {
-                tmp.put("b", 255);
-                tmp.put("g", 0);
-                tmp.put("r", 0);
-            } else {
-                tmp.put("b", 255);
-                tmp.put("g", 0);
-                tmp.put("r", 255);
-            }
-            pixels_array.put(tmp);
+            pixels_array = jsonArray;
+            handleNetworkRequest(NetworkThread.SET_PIXELS, pixels_array, 0 ,0);
+        } catch (Exception e) {
+            e.printStackTrace();
         }
+    }
+
+    @OnClick(R.id.move_backward_button)
+    void movePixelsBackward() {
+        try {
+            JSONArray jsonArray = new JSONArray();
+            for (int i = 0; i < pixels_array.length(); i++) {
+                jsonArray.put(pixels_array.get((i + 10) % pixels_array.length()));
+            }
+            pixels_array = jsonArray;
+            handleNetworkRequest(NetworkThread.SET_PIXELS, pixels_array, 0 ,0);
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+
+    private void handleNetworkRequest(int what, Object payload, int arg1, int arg2) {
+        Message msg = mNetworkHandler.obtainMessage();
+        msg.what = what;
+        msg.obj = payload;
+        msg.arg1 = arg1;
+        msg.arg2 = arg2;
+        msg.sendToTarget();
+    }
+
+    JSONArray preparePixelsArray() {
+        JSONArray pixels_array = new JSONArray();
+        JSONObject tmp;
+        try {
+            for (int i = 0; i < 1072; i++) {
+                tmp = new JSONObject();
+                tmp.put("a", 0);
+                if (i < 522) {
+                    tmp.put("g", 255);
+                    tmp.put("b", 0);
+                    tmp.put("r", 0);
+                } else if (i < 613) {
+                    tmp.put("r", 255);
+                    tmp.put("g", 0);
+                    tmp.put("b", 0);
+                } else if (i < 791) {
+                    tmp.put("b", 255);
+                    tmp.put("g", 0);
+                    tmp.put("r", 0);
+                } else {
+                    tmp.put("b", 255);
+                    tmp.put("g", 0);
+                    tmp.put("r", 255);
+                }
+                pixels_array.put(tmp);
+            }
+        } catch (JSONException exception) {
+            // No errors expected here
+        }
+        return pixels_array;
     }
 
 }

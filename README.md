@@ -9,7 +9,7 @@ Dipendenze:
 
 Dopo avere installato le dipendenze nel sistema si clona il repository https://github.com/j3tm1r/ragnatela_did.git col seguente comando dato da terminale:
 
-    # Let me re-iterate ...
+    # Cloniamo il repository git ...
     > git clone https://github.com/j3tm1r/ragnatela_did.git
 
 Il comando crea una nuova cartella che si chiama **ragnatela_did** clonando il reposoitory su Github. Successivamente si eseguono i comandi:

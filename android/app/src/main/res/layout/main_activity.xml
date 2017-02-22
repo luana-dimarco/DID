@@ -75,7 +75,7 @@
     </LinearLayout>
 
     <Button
-        android:id="@+id/test_post_button"
+        android:id="@+id/set_display_pixels"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:text="Random Display colors"
@@ -84,7 +84,7 @@
 
 
     <Button
-        android:id="@+id/change_color_button"
+        android:id="@+id/highlight_components_button"
         android:layout_width="wrap_content"
         android:layout_height="48dp"
         android:layout_marginTop="50dp"
@@ -98,7 +98,7 @@
         android:orientation="horizontal">
 
         <Button
-            android:id="@+id/move_back_button"
+            android:id="@+id/move_backward_button"
             android:layout_width="48dp"
             android:layout_height="48dp"
             android:text="@string/goleft"
