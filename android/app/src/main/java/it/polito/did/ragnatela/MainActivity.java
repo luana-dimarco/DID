@@ -44,6 +44,9 @@ public class MainActivity extends Activity {
     @BindView(R.id.highlight_components_button)
     Button changeColorButton;
 
+    @BindView(R.id.ramo1_button)
+    Button ramo1Button;
+
     @BindViews({R.id.first_byte_ip, R.id.second_byte_ip, R.id.third_byte_ip, R.id.fourth_byte_ip})
     List<EditText> ip_address_bytes;
 
@@ -53,9 +56,13 @@ public class MainActivity extends Activity {
     private TextWatcher myIpTextWatcher;
     private JSONArray pixels_array;
 
+    private JSONArray primo_t, secondo_t, terzo_t, quarto_t, quinto_t, primo_c, secondo_c, terzo_c;
+
     private Handler mNetworkHandler, mMainHandler;
 
     private NetworkThread mNetworkThread = null;
+    private int l_primo_t = 51;
+    private int l_secondo_t = 133;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -68,6 +75,7 @@ public class MainActivity extends Activity {
         moveBackwardButton.setEnabled(false);
         moveForwardButton.setEnabled(false);
         changeColorButton.setEnabled(false);
+        ramo1Button.setEnabled(false);
 
         myIpTextWatcher = new TextWatcher() {
             @Override
@@ -84,13 +92,14 @@ public class MainActivity extends Activity {
                     randomColors.setEnabled(true);
                     set_display_pixels.setEnabled(true);
                     changeColorButton.setEnabled(true);
+                    ramo1Button.setEnabled(true);
                     Message msg = mNetworkHandler.obtainMessage();
                     msg.what = NetworkThread.SET_SERVER_DATA;
                     msg.obj = host_url;
                     msg.arg1 = host_port;
                     msg.sendToTarget();
 
-                    handleNetworkRequest(NetworkThread.SET_SERVER_DATA, host_url, host_port ,0);
+                    handleNetworkRequest(NetworkThread.SET_SERVER_DATA, host_url, host_port, 0);
                 }
             }
 
@@ -115,6 +124,46 @@ public class MainActivity extends Activity {
         };
 
         startHandlerThread();
+
+        try {
+            initalizePixels();
+        } catch (JSONException e) {
+            //Non dovrebbe avere problemi
+            e.printStackTrace();
+        }
+    }
+
+    private void initalizePixels() throws JSONException {
+        JSONObject tmp;
+        primo_t = new JSONArray();
+        for (int i = 0; i < l_primo_t; i++) {
+            tmp = new JSONObject();
+            tmp.put("a", 0);
+            tmp.put("g", 255);
+            tmp.put("b", 0);
+            tmp.put("r", 0);
+            primo_t.put(tmp);
+        }
+
+        secondo_t = new JSONArray();
+        for (int i = 0; i < l_secondo_t; i++) {
+            tmp = new JSONObject();
+            tmp.put("a", 0);
+            tmp.put("g", 0);
+            tmp.put("b", 0);
+            tmp.put("r", 0);
+            secondo_t.put(tmp);
+        }
+
+        terzo_t = new JSONArray();
+        for (int i = 0; i < 1072 - l_primo_t - l_secondo_t; i++) {
+            tmp = new JSONObject();
+            tmp.put("a", 0);
+            tmp.put("g", 0);
+            tmp.put("b", 0);
+            tmp.put("r", 0);
+            terzo_t.put(tmp);
+        }
     }
 
     public void startHandlerThread() {
@@ -205,7 +254,7 @@ public class MainActivity extends Activity {
                 ((JSONObject) pixels_array.get(i)).put("g", (int) (Math.random() * 255.0f));
                 ((JSONObject) pixels_array.get(i)).put("b", (int) (Math.random() * 255.0f));
             }
-            handleNetworkRequest(NetworkThread.SET_PIXELS, pixels_array, 0 ,0);
+            handleNetworkRequest(NetworkThread.SET_PIXELS, pixels_array, 0, 0);
         } catch (Exception e) {
             e.printStackTrace();
         }
@@ -222,7 +271,7 @@ public class MainActivity extends Activity {
                 ((JSONObject) pixels_array.get(i)).put("g", (int) (Math.random() * 255.0f));
                 ((JSONObject) pixels_array.get(i)).put("b", (int) (Math.random() * 255.0f));
             }
-            handleNetworkRequest(NetworkThread.SET_DISPLAY_PIXELS, pixels_array, 0 ,0);
+            handleNetworkRequest(NetworkThread.SET_DISPLAY_PIXELS, pixels_array, 0, 0);
         } catch (JSONException e) {
             // There should be no Exception
         }
@@ -232,7 +281,7 @@ public class MainActivity extends Activity {
     void highLightComponents() {
         try {
             pixels_array = preparePixelsArray();
-            handleNetworkRequest(NetworkThread.SET_PIXELS, pixels_array, 0 ,0);
+            handleNetworkRequest(NetworkThread.SET_PIXELS, pixels_array, 0, 0);
         } catch (Exception e) {
             e.printStackTrace();
         }
@@ -246,7 +295,7 @@ public class MainActivity extends Activity {
                 jsonArray.put(pixels_array.get((i + pixels_array.length() - 10) % pixels_array.length()));
             }
             pixels_array = jsonArray;
-            handleNetworkRequest(NetworkThread.SET_PIXELS, pixels_array, 0 ,0);
+            handleNetworkRequest(NetworkThread.SET_PIXELS, pixels_array, 0, 0);
         } catch (Exception e) {
             e.printStackTrace();
         }
@@ -260,10 +309,47 @@ public class MainActivity extends Activity {
                 jsonArray.put(pixels_array.get((i + 10) % pixels_array.length()));
             }
             pixels_array = jsonArray;
-            handleNetworkRequest(NetworkThread.SET_PIXELS, pixels_array, 0 ,0);
+            handleNetworkRequest(NetworkThread.SET_PIXELS, pixels_array, 0, 0);
         } catch (Exception e) {
             e.printStackTrace();
         }
+    }
+
+    @OnClick(R.id.ramo1_button)
+    void ramo1() {
+        try {
+            JSONArray jsonArray = new JSONArray();
+
+            for(int i=0; i<primo_t.length(); i++)
+                jsonArray.put(primo_t.get(i));
+
+
+            for(int i=0; i<secondo_t.length(); i++)
+                jsonArray.put(secondo_t.get(i));
+
+
+            for(int i=0; i<terzo_t.length(); i++)
+                jsonArray.put(terzo_t.get(i));
+
+            handleNetworkRequest(NetworkThread.SET_PIXELS, jsonArray, 0, 0);
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        /*try {
+            for (int i = 0; i < 26; i++) {
+                ((JSONObject) pixels_array.get(i)).put("r", 255);
+                ((JSONObject) pixels_array.get(i)).put("g", 0);
+                ((JSONObject) pixels_array.get(i)).put("b", 0);
+                wait(1000);
+                ((JSONObject) pixels_array.get(i)).put("r", 0);
+                ((JSONObject) pixels_array.get(i)).put("g", 255);
+                ((JSONObject) pixels_array.get(i)).put("b", 0);
+                handleNetworkRequest(NetworkThread.SET_PIXELS, pixels_array, 0 ,0);
+            }
+
+        } catch (Exception e) {
+            e.printStackTrace();
+        }*/
     }
 
     private void handleNetworkRequest(int what, Object payload, int arg1, int arg2) {
@@ -306,5 +392,6 @@ public class MainActivity extends Activity {
         }
         return pixels_array;
     }
+
 
 }
