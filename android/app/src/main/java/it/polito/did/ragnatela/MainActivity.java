@@ -335,6 +335,7 @@ public class MainActivity extends Activity {
         } catch (Exception e) {
             e.printStackTrace();
         }
+
         /*try {
             for (int i = 0; i < 26; i++) {
                 ((JSONObject) pixels_array.get(i)).put("r", 255);
