@@ -56,13 +56,15 @@ public class MainActivity extends Activity {
     private TextWatcher myIpTextWatcher;
     private JSONArray pixels_array;
 
-    private JSONArray primo_t, secondo_t, terzo_t, quarto_t, quinto_t, primo_c, secondo_c, terzo_c;
+    private JSONArray primo_t, secondo_t, terzo_t, mezzo_proiettile, restanti, quarto_t, quinto_t, primo_c, secondo_c, terzo_c;
 
     private Handler mNetworkHandler, mMainHandler;
 
     private NetworkThread mNetworkThread = null;
     private int l_primo_t = 51;
     private int l_secondo_t = 133;
+
+    private int [][]ragnatela=new int[1072][4];// per ogni px abbiamo 4 colonne che indentificano i valori di a, rgb
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -134,12 +136,19 @@ public class MainActivity extends Activity {
     }
 
     private void initalizePixels() throws JSONException {
+
+        for(int i=0;i<1072;i++){
+            for(int j=0; j<4; j++){
+                ragnatela[i][j]=0;// li spegniamo tutti
+            }
+        }
+
         JSONObject tmp;
         primo_t = new JSONArray();
         for (int i = 0; i < l_primo_t; i++) {
             tmp = new JSONObject();
             tmp.put("a", 0);
-            tmp.put("g", 255);
+            tmp.put("g", 0);
             tmp.put("b", 0);
             tmp.put("r", 0);
             primo_t.put(tmp);
@@ -304,6 +313,14 @@ public class MainActivity extends Activity {
     @OnClick(R.id.move_backward_button)
     void movePixelsBackward() {
         try {
+            for(int j=0;j<(l_primo_t/2);j++){
+                mezzo_proiettile = setProiettile(j);
+                handleNetworkRequest(NetworkThread.SET_PIXELS, mezzo_proiettile, 0, 0);
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        /*try {
             JSONArray jsonArray = new JSONArray();
             for (int i = 0; i < pixels_array.length(); i++) {
                 jsonArray.put(pixels_array.get((i + 10) % pixels_array.length()));
@@ -312,7 +329,7 @@ public class MainActivity extends Activity {
             handleNetworkRequest(NetworkThread.SET_PIXELS, pixels_array, 0, 0);
         } catch (Exception e) {
             e.printStackTrace();
-        }
+        }*/
     }
 
     @OnClick(R.id.ramo1_button)
@@ -362,6 +379,58 @@ public class MainActivity extends Activity {
         msg.sendToTarget();
     }
 
+    JSONArray setProiettile(int j){//muoviamo il proiettile in su
+        JSONObject tmp;
+        JSONArray mezzo_proiettile = new JSONArray();
+
+        ragnatela[j][0]=0;// coloriamo i primi 3 led verdi
+        ragnatela[j][1]=0;
+        ragnatela[j][2]=0;
+        ragnatela[j][3]=0;
+
+        ragnatela[j+1][0]=100;// coloriamo i primi 3 led verdi
+        ragnatela[j+1][1]=255;
+        ragnatela[j+1][2]=0;
+        ragnatela[j+1][3]=0;
+
+        ragnatela[j+2][0]=255;// coloriamo i primi 3 led verdi
+        ragnatela[j+2][1]=255;
+        ragnatela[j+2][2]=0;
+        ragnatela[j+2][3]=0;
+
+        // anche gli ultimi si accendono
+
+        ragnatela[l_primo_t-j][0]=0;// coloriamo i primi 3 led verdi
+        ragnatela[l_primo_t-j][1]=0;
+        ragnatela[l_primo_t-j][2]=0;
+        ragnatela[l_primo_t-j][3]=0;
+
+        ragnatela[l_primo_t-j-1][0]=100;// coloriamo i primi 3 led verdi
+        ragnatela[l_primo_t-j-1][1]=255;
+        ragnatela[l_primo_t-j-1][2]=0;
+        ragnatela[l_primo_t-j-1][3]=0;
+
+        ragnatela[l_primo_t-j-2][0]=255;// coloriamo i primi 3 led verdi
+        ragnatela[l_primo_t-j-2][1]=255;
+        ragnatela[l_primo_t-j-2][2]=0;
+        ragnatela[l_primo_t-j-2][3]=0;
+
+        try{
+            for (int i = 0; i < 1072; i++) {
+                tmp = new JSONObject();
+                tmp.put("a", ragnatela[i][0]);
+                tmp.put("r", ragnatela[i][1]);
+                tmp.put("g", ragnatela[i][2]);
+                tmp.put("b", ragnatela[i][3]);
+
+                mezzo_proiettile.put(tmp);
+            }
+        } catch (JSONException exception) {
+            // No errors expected here
+        }
+        return mezzo_proiettile;
+    }
+
     JSONArray preparePixelsArray() {
         JSONArray pixels_array = new JSONArray();
         JSONObject tmp;
@@ -393,6 +462,5 @@ public class MainActivity extends Activity {
         }
         return pixels_array;
     }
-
 
 }
